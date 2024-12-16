@@ -1,9 +1,10 @@
 const fs = require('fs');
 
-const rawData = fs.readFileSync('day6_test.txt').toString();
+const rawData = fs.readFileSync('day6_input.txt').toString();
 const dataRows = rawData.split('\n');
 
 const map = dataRows.map(row => row.split(''));
+let mapCopy = structuredClone(map);
 
 // map[row][column] (INVERTED X Y AXIS!!!);
 
@@ -64,12 +65,12 @@ function next(x, y) {
 
 function isEnd(x, y) {
     // If it's undefined, return true
-    return !(map[x] && map[x][y])
+    return !(mapCopy[x] && mapCopy[x][y])
 }
 
 function isObstructed(x, y) {
     // If it's undefined, return true
-    return map[x][y] === '#';
+    return mapCopy[x][y] === '#';
 }
 
 let keepGoing = true;
@@ -79,6 +80,8 @@ while (keepGoing) {
 }
 
 console.log(visited.size)
+
+const originalVisited = structuredClone(visited);
 
 function step() {
     visited.add(JSON.stringify(currentPosition));
@@ -99,24 +102,45 @@ function step() {
 
 }
 
+let safeLocations = 0;
+let counter = 0;
+
 // for each visited, add a #
-let mapCopy = structuredClone(map);
-// mapCopy[6][3] = '#';
+for (let visit of originalVisited) {
+    counter++;
+    // Reset search
+    let loopFound = false;
+    mapCopy = structuredClone(map);
+    const x = JSON.parse(visit)[0];
+    const y = JSON.parse(visit)[1];
+    mapCopy[x][y] = '#';
 
-currentPosition = start;
+    directionalVisited.clear();
 
-keepGoing = true;
+    currentPosition = start;
+    currentDirection = 'N';
 
-while (keepGoing) {
-    console.log("PreStep: ", JSON.stringify([...currentPosition, currentDirection]))
+    keepGoing = true;
 
-    step()
-    if (directionalVisited.has(JSON.stringify([...currentPosition, currentDirection]))) {
-        console.log("loop!!!")
-        break;
+    while (keepGoing) {
+        if (directionalVisited.has(JSON.stringify([...currentPosition, currentDirection]))) {
+            loopFound = true;
+
+            if (x === 95) {
+                console.log(visit)
+            }
+            break;
+        }
+    
+        directionalVisited.add(JSON.stringify([...currentPosition, currentDirection]));
+    
+        step()
     }
-    directionalVisited.add(JSON.stringify([...currentPosition, currentDirection]));
 
-    console.log("PostStep: ", JSON.stringify([...currentPosition, currentDirection]))
+    if (loopFound && (x != start[0] || y != start[1])) {
+        safeLocations++;
+    }
+
 }
 
+console.log(safeLocations)
